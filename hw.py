@@ -1,31 +1,50 @@
-# import cv2
-# import numpy as np
+import cv2
+import numpy as np
+
+
+orig = cv2.imread('sonet.png', cv2.IMREAD_GRAYSCALE)
+cv2.imshow('orig', orig)
+
+# розмиття або наведення різкості
+
+kernel_sharp = np.array([[0, -1, 0],
+                   [-1, 5,-1],
+                   [0, -1, 0]])
+
+orig_sharp = cv2.filter2D(orig,
+                       -5,
+                       kernel_sharp
+                       )
+
+cv2.imshow("orig_sharp", orig_sharp)
+
+
+blurred_orig = cv2.GaussianBlur(orig_sharp,
+                                ksize=(3, 3),
+                                sigmaX=5)
+
+cv2.imshow('blurred_orig', blurred_orig)
 #
+# # адаптивна бінарізація
 #
-# valley_orig = cv2.imread('darken.png')
+adapted = cv2.adaptiveThreshold(blurred_orig,
+                                255,
+                                cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                                cv2.THRESH_BINARY,
+                                11,
+                                2.1,
+                                )
+
+cv2.imshow('adapted', adapted)
 #
-# #  застосуйте вирівнювання гістограм
+# # очищеня шумів
 #
-# valley_hsv_pre_eq = cv2.cvtColor(valley_orig, cv2.COLOR_BGR2HSV)
-# img_value_pre_eq = valley_hsv_pre_eq[:, :, 2]
-# v_equalized = cv2.equalizeHist(img_value_pre_eq)
-# valley_hsv_pre_eq[:, :, 2] = v_equalized
-#
-# valley_brg_equalized = cv2.cvtColor(valley_hsv_pre_eq, cv2.COLOR_HSV2BGR)
-#
-# # збільшіть значення десь на 20-50%, оскільки тут
-# # результат буде типу float32 та явно вийде за межі [0-255]
-# # застосуйте np.clip(value, 0, 255) та value.astype(np.uint8)
-#
-# valley_hsv = cv2.cvtColor(valley_orig, cv2.COLOR_BGR2HSV)
-# img_value = valley_hsv[:, :, 2]
-#
-# value_new = np.clip(img_value * 1.5, 0, 255).astype(np.uint8)
-# valley_hsv[:, :, 2] = value_new
-# valley_brg_new = cv2.cvtColor(valley_hsv, cv2.COLOR_HSV2BGR)
-#
-# # Виведіть результати обох обробок на екран
-#
-# cv2.imshow('equalized image', valley_brg_equalized)
-# cv2.imshow('50% brightened image', valley_brg_new)
-# cv2.waitKey(0)
+adapt_bilateral = cv2.bilateralFilter(adapted,
+                              d=11,
+                              sigmaColor=75,
+                              sigmaSpace=75,
+                              )
+
+cv2.imshow("adapt_bilateral", adapt_bilateral)
+
+cv2.waitKey(0)
