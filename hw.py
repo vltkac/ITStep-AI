@@ -1,50 +1,59 @@
+# Завдання 2
+# Відкрийте відео з файлу data\lesson7\text.mp4. Проведіть
+# бінарізацію кадрів та збережіть в новий файл.
+
+
 import cv2
-import numpy as np
 
 
-orig = cv2.imread('sonet.png', cv2.IMREAD_GRAYSCALE)
-cv2.imshow('orig', orig)
+cap = cv2.VideoCapture('text.mp4')
 
-# розмиття або наведення різкості
+fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+fps = int(cap.get(cv2.CAP_PROP_FPS))
+width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-kernel_sharp = np.array([[0, -1, 0],
-                   [-1, 5,-1],
-                   [0, -1, 0]])
+# cap.set(cv2.CAP_PROP_FRAME_WIDTH, int(width * 0.5))
+# cap.set(cv2.CAP_PROP_FRAME_HEIGHT, int(height * 0.5))
 
-orig_sharp = cv2.filter2D(orig,
-                       -5,
-                       kernel_sharp
-                       )
+writer = cv2.VideoWriter(
+    'new_text.mp4',  # шлях до файлу
+    fourcc,        # кодек
+    fps,
+    (width // 2, height // 2),
+    isColor=False   # чи кадри кольорові
+)
 
-cv2.imshow("orig_sharp", orig_sharp)
 
+while True:
+    success, img = cap.read()
 
-blurred_orig = cv2.GaussianBlur(orig_sharp,
-                                ksize=(3, 3),
-                                sigmaX=5)
+    if not success:
+        break
 
-cv2.imshow('blurred_orig', blurred_orig)
-#
-# # адаптивна бінарізація
-#
-adapted = cv2.adaptiveThreshold(blurred_orig,
+    img = cv2.resize(img, None, fx=0.5, fy=0.5)
+
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+    img = cv2.GaussianBlur(img, (9, 9), 1)
+    img = cv2.bilateralFilter(img, 7, 75, 75)
+
+    img = cv2.adaptiveThreshold(img,
                                 255,
                                 cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
                                 cv2.THRESH_BINARY,
                                 11,
-                                2.1,
-                                )
+                                4
+                            )
 
-cv2.imshow('adapted', adapted)
-#
-# # очищеня шумів
-#
-adapt_bilateral = cv2.bilateralFilter(adapted,
-                              d=11,
-                              sigmaColor=75,
-                              sigmaSpace=75,
-                              )
 
-cv2.imshow("adapt_bilateral", adapt_bilateral)
+    cv2.imshow('orig', img)
 
-cv2.waitKey(0)
+    writer.write(img)
+
+    if cv2.waitKey(20) & 0xFF == ord('q'):
+        break
+
+
+cap.release()
+writer.release()
